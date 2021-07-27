@@ -1,0 +1,279 @@
+<?php
+        $formErrors=array();
+        $pageTitle='Login Page';        
+        session_start();
+        
+    if(isset($_SESSION['user']))
+    {
+        header('Location: index.php'); // Redirect to dashboard page
+    }
+
+    
+    include 'init.php'; 
+
+ //Check if user coming from HTTP POST
+    if($_SERVER['REQUEST_METHOD'] == 'POST')
+    { 
+        //echo $_POST['submit'];
+        //exit();
+        if($_POST['submit']=='Login') {
+                $username=$_POST['name'];
+                $password=$_POST['password'];        
+                $hashPass=sha1($password);
+            
+
+                //Check if the is exist in DB
+
+                $stmt=$con->prepare("select *         
+                from users 
+                where Username=? And Password=?"); //Important Statment
+                $stmt->execute(array($username,$hashPass));//execute statment with DB        
+                $count=$stmt->rowCount();
+                if($count > 0)
+                {
+                    $_SESSION['user']=$username; //Register Session Name           
+                    header('Location: index.php'); // Redirect to dashboard page
+                    exit();
+
+                    //echo "welcome".' '.$username;
+
+                }else{
+                    //echo "Please enter correct data";
+                }        
+                
+        }else{
+           
+            if(isset($_POST['name'])){
+                $username=filter_var($_POST['name'],FILTER_SANITIZE_STRING);
+                if(strlen($username)<4){
+                    $formErrors[]="Username must be 4 characters at lrast ";
+                }                
+            }
+            if(empty($_POST['password']) or empty($_POST['password2'])){
+                      if(empty($_POST['password'])){
+                        $formErrors[]="Password can not be <strong> empty </strong> ";
+                      }  
+                      if(empty($_POST['password2'])){
+                        $formErrors[]="Confirmed Password can not be <strong> empty </strong> ";
+                      }       
+            }
+              
+            if(isset($_POST['password'])){
+                $password1=sha1($_POST['password']);
+                $password2=sha1($_POST['password2']);                
+                if($password1 == $password2){
+                    $hashedPass=$password1;
+                }else{
+                    $formErrors[]="Passwords are not match ";
+                }                
+            }            
+            if(empty($_POST['email'])){
+                $formErrors[]="Email can not be <strong> empty </strong> ";
+            }
+
+            if(isset($_POST['email'])){
+                $email=filter_var($_POST['email'],FILTER_SANITIZE_EMAIL);
+               // echo $email;
+                //exit();
+                if(filter_var($email,FILTER_VALIDATE_EMAIL)!=true){ 
+                    $formErrors[]='Email is not <strong> valid </strong>';
+                }          
+               
+            }
+            
+             
+                                
+                   
+        }
+        
+    }
+    ?>
+
+   <div class="container login-page">
+       
+                <h2 class="text-center">
+                   <span data-class="login" class="loginSelected" >Login</span> | <span data-class="signup">Signup</span>
+                   <!--- طريقة اسامة 
+                    <span data-class="login" class="selected" >Login</span> | <span data-class="signup">Signup</span>
+                   -->
+
+                </h2>            
+                <form class="login" action="<?php echo $_SERVER['PHP_SELF'] ?>" method='post'>            
+                    <div class="input-container">
+                         <input class="form-control"
+                           type="text"
+                            name="name"
+                            placeholder="username" 
+                            autocomplete="off" 
+                            required="required" />
+                    </div>
+                    <div class="input-container">
+                         <input class="form-control"
+                                type="password" 
+                                name="password" 
+                                placeholder="password" 
+                                autocomplete="new-password" 
+                                required="required" />
+                    </div>
+                    <input class=" btn btn-primary btn-block" type="submit" name="submit" value="Login" />
+                </form>  
+                <form class="signup" action="<?php echo $_SERVER['PHP_SELF'] ?>" method='post'>            
+                     <div class="input-container">          
+                          <input class="form-control"
+                                   pattern=".{4,}"
+                                   title="Username must be more than 4 characters"
+                                   type="text"
+                                   name="name"
+                                   placeholder="username"
+                                    autocomplete="off"
+                                    required="required"/>
+                      </div>
+                    <div class="input-container">          
+                           <input class="form-control"
+                                  minlength="4"
+                                  type="password" 
+                                  name="password"
+                                  placeholder="password"
+                                  autocomplete="new-password"
+                                  required="required"/>
+                    </div> 
+                    <div class="input-container">           
+                          <input class="form-control" 
+                                 type="password" 
+                                 name="password2"
+                                 placeholder="Conform password"
+                                 autocomplete="new-password" />
+                    </div> 
+                    <div class="input-container">           
+                          <input class="form-control" 
+                                 type="text" 
+                                 name="email"
+                                 placeholder="Type your email"
+                                 autocomplete="on"
+                                 required="required"/>
+                    </div> 
+                    <input class=" btn btn-success btn-block"
+                           type="submit" name="submit" id="<?php if(!empty($formErrors)){
+                                echo'signupWithErrors';}else{
+                                    echo'signup';   
+                                }                                
+                                 ?>" value="signup"/>
+                    
+                </form> 
+
+                <div class="the-errors text-center">
+                   <?php  
+                        if($formErrors){
+                            foreach($formErrors as $error){
+                                echo '<div class ="alert alert-danger">'.$error.'</div>';
+                                
+                            }
+                        }             
+                        
+                   ?>
+                </div>
+       
+           
+   </div>
+
+<?php      
+    include "includes/templates/footer.php";
+?>
+
+
+
+
+$(function(){
+'use strict';
+
+// Swich selected span 
+
+$('.login-page h2 span').click(function(){  
+    var y=$('submit').val();
+    console.log(y);
+    var x=$(this).data('class');
+    
+     if(x=='login'){
+        
+        $('.login-page form').hide();
+        $(this).addClass('loginSelected').siblings().removeClass('signupSelected');
+        $('.login').fadeIn(100);
+       
+    }else{
+        $('.login-page form').hide();
+        $(this).addClass('signupSelected').siblings().removeClass('loginSelected');
+        $('.signup').fadeIn(100);           
+     }
+
+      //طريقة أسامة
+        /*
+        $('.login-page h2 span').click(function(){
+        $(this).addClass('selected).siblings().removeClass('selected);
+        $('.login-page form').hide();
+        $('.'+$(this).data('class').fadeIn(100);
+        */
+});
+
+
+$('#signupWithErrors').click(function(){
+  
+       $('.login-page form').hide();
+
+     //  $('.login-page form').addClass('signupSelected').siblings().removeClass('loginSelected');
+      // $('.signup').fadeIn(100);
+ /// console.log('AAAAAAAAAAAAAAAAAAAAAAAA');
+  alert('SSSSSSSSSSS');
+  
+});
+
+////////////////////////
+
+
+
+ // Calls the selectBoxIt method on your HTML select box
+ $("select").selectBoxIt({
+
+    // Uses the jQuery 'fadeIn' effect when opening the drop down
+    showEffect: "fadeIn",
+
+    // Sets the jQuery 'fadeIn' effect speed to 400 milleseconds
+    showEffectSpeed: 400,
+
+    // Uses the jQuery 'fadeOut' effect when closing the drop down
+    hideEffect: "fadeOut",
+
+    // Sets the jQuery 'fadeOut' effect speed to 400 milleseconds
+    hideEffectSpeed: 400
+
+    
+
+  });
+
+//Hide Placeholder on form focous
+$('[placeholder]').focus(function(){
+    $(this).attr('data-text',$(this).attr('placeholder'));
+    $(this).attr('placeholder','');
+    }).blur(function(){
+        $(this).attr('placeholder',$(this).attr('data-text'));
+    });
+
+//Add asterisk for required fields
+
+$('input').each(function(){
+    if($(this).attr('required')==='required'){
+        $(this).after('<span class="astrisk">*</span>');
+    }
+    });
+
+});
+
+
+<input class=" btn btn-success btn-block"
+                           type="submit" name="submit" id="<?php if(!empty($formErrors)){
+                                echo'signupWithErrors';}else{
+                                    echo'signup';   
+                                }                                
+                                 ?>" value="signup"/>
+
+
+                                 https://www.quora.com/How-do-I-get-a-PHP-error-message-without-refreshing-the-page-on-the-login-form
